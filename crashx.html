@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CrashX - Game Verification Script</title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="googlebot" content="noindex, nofollow" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script
+      type="text/javascript"
+      src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="//cdnjs.cloudflare.com/ajax/libs/bulma/0.6.2/css/bulma.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <script
+      type="text/javascript"
+      src="//cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"
+    ></script>
+
+    <style>
+      *,
+      body,
+      button,
+      input,
+      textarea,
+      select {
+        text-rendering: optimizeLegibility;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      body,
+      div,
+      dl,
+      dt,
+      dd,
+      ul,
+      ol,
+      li,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      pre,
+      form,
+      fieldset,
+      input,
+      textarea,
+      p,
+      blockquote,
+      th,
+      td {
+        margin: 0;
+        padding: 0;
+      }
+      table {
+        border-collapse: collapse;
+        border-spacing: 0;
+      }
+      fieldset,
+      img {
+        border: 0;
+      }
+      address,
+      caption,
+      cite,
+      code,
+      dfn,
+      em,
+      strong,
+      th,
+      var {
+        font-style: normal;
+        font-weight: normal;
+      }
+      ol,
+      ul {
+        list-style: none;
+      }
+      caption,
+      th {
+        text-align: left;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-size: 100%;
+        font-weight: normal;
+      }
+      q:before,
+      q:after {
+        content: "";
+      }
+      abbr,
+      acronym {
+        border: 0;
+      }
+    </style>
+    <style type="text/css">
+      table {
+        table-layout: fixed;
+      }
+      table thead tr th:first-child {
+        width: 80%;
+      }
+      table tbody tr td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .is-first {
+        background-color: rgba(195, 111, 24, 0.2);
+      }
+      .is-over-median {
+        color: #44b39d;
+      }
+      .is-at-median {
+        color: #3b3c3d;
+      }
+      .is-under-median {
+        color: #bf4a67;
+      }
+    </style>
+  </head>
+
+  <body>
+    <section class="section">
+      <div class="container">
+        <h1 class="title">CrashX - Game Verification Script</h1>
+        <h2 class="subtitle">
+          Third party script used to verify rounds of CrashX.
+        </h2>
+      </div>
+      <hr />
+      <div class="container content">
+        <p><strong>Provably Fair</strong> - Every CrashX round has a pre-generated SHA256 hash. The hashes form a chain: the previous round's hash is SHA256 of the next round's hash, so past results cannot be changed after they are published.</p>
+        <p>The crash point of a round is calculated from its hash and the salt:</p>
+        <ol>
+          <li>If the salt is not empty: <code>h</code> = HMAC_SHA256(message = the round's hash bytes, key = salt text); otherwise <code>h</code> = the round's hash</li>
+          <li>Take the first 13 hex characters of <code>h</code> (52 bits) as an integer <code>r</code></li>
+          <li>Exact crash point <code>C</code> = 2<sup>52</sup> / (2<sup>52</sup> &minus; r)</li>
+          <li>Crash time <code>crashAt</code> = floor(ln(C) / 0.00006) ms after the round starts</li>
+          <li>Bust = floor(e<sup>0.00006 &times; crashAt</sup> &times; 100) / 100, the multiplier the curve reached at that millisecond</li>
+        </ol>
+        <p>No house edge is taken from the crash point. Paste a round's hash below to recalculate it and the rounds before it.</p>
+      </div>
+      <hr />
+      <div class="container">
+        <div class="field">
+          <label class="label">Game's hash</label>
+          <p class="control has-icons-left">
+            <input
+              class="input"
+              type="text"
+              id="game_hash_input"
+              placeholder="Game's hash (SHA256)"
+            />
+            <span class="icon is-small is-left"><i class="fa fa-key"></i></span>
+          </p>
+        </div>
+        <div class="field">
+          <label class="label">Salt</label>
+          <p class="control has-icons-left">
+            <input
+              class="input"
+              type="text"
+              id="game_salt_input"
+              placeholder="Salt"
+              value="000000000000000000010283162e089cc99f643ee5043141412e839945afe2f9"
+            />
+            <span class="icon is-small is-left"
+              ><i class="fa fa-filter"></i
+            ></span>
+          </p>
+        </div>
+        <div class="field">
+          <label class="label">Amount of games</label>
+          <p class="control has-icons-left">
+            <input
+              class="input"
+              type="number"
+              id="game_amount_input"
+              min="1"
+              max="100000"
+              step="1"
+              placeholder="Amount of games"
+              value="10"
+            />
+            <span class="icon is-small is-left"
+              ><i class="fa fa-hashtag"></i
+            ></span>
+          </p>
+        </div>
+        <div class="field is-grouped">
+          <p class="control">
+            <a class="button is-primary" id="game_verify_submit">Verify</a>
+          </p>
+        </div>
+      </div>
+      <hr />
+      <div class="container">
+        <table
+          class="table is-striped is-fullwidth is-hoverable is-narrow"
+          style="display: table"
+        >
+          <thead>
+            <tr>
+              <th><b>Game's hash</b></th>
+              <th><b>Bust</b></th>
+            </tr>
+          </thead>
+          <tbody id="game_verify_table"></tbody>
+        </table>
+      </div>
+    </section>
+    <script type="text/javascript">
+      var isVerifying = false;
+      $("#game_verify_submit").on("click", () => {
+        if (isVerifying) return;
+        isVerifying = true;
+        $("#game_hash_input").parent().addClass("is-loading");
+        $("#game_verify_submit").addClass("is-loading");
+        $("#game_hash_input, #game_amount_input, #game_verify_submit").attr(
+          "disabled",
+          "disabled"
+        );
+        $("#game_verify_table").html("");
+        let prevHash = null;
+        for (let i = 0; i < $("#game_amount_input").val(); i++) {
+          let hash = String(
+            prevHash ? CryptoJS.SHA256(String(prevHash)) : $("#game_hash_input").val().trim()
+          );
+          let bust = gameResult(hash, $("#game_salt_input").val());
+          setTimeout(function () {
+            addTableRow(hash, bust, i);
+          }, i * 1);
+          prevHash = hash;
+        }
+      });
+      $("#game_amount_input").on("keyup", () => {
+        if ($("#game_amount_input").val() >= 10000) {
+          if ($("#game_verify_warning").length) return;
+          $("#game_verify_submit")
+            .parent()
+            .append(
+              $("<span/>")
+                .attr({
+                  id: "game_verify_warning",
+                  class: "tag is-warning",
+                })
+                .text(
+                  "Verifying a huge amount of games may consume more resources from your CPU"
+                )
+            );
+        } else {
+          if ($("#game_verify_warning").length) {
+            $("#game_verify_warning").remove();
+          }
+        }
+      });
+      const addTableRow = (hash, bust, index) => {
+        $("<tr/>")
+          .attr({
+            class: index === 0 ? "is-first" : null,
+          })
+          .append($("<td/>").text(hash))
+          .append(
+            $("<td/>")
+              .text(bust)
+              .attr({
+                class:
+                  bust === 2
+                    ? "is-at-median"
+                    : bust > 2
+                    ? "is-over-median"
+                    : "is-under-median",
+              })
+          )
+          .appendToWithIndex($("#game_verify_table"), index);
+        if (index >= $("#game_amount_input").val() - 1) {
+          $("#game_hash_input").parent().removeClass("is-loading");
+          $("#game_verify_submit").removeClass("is-loading");
+          $(
+            "#game_hash_input, #game_amount_input, #game_verify_submit"
+          ).removeAttr("disabled");
+          isVerifying = false;
+        }
+      };
+      // CrashX: keep the operation order exactly as below, equivalent rewrites can differ by 1 ulp
+      const K = 0.00006;
+      const POW_2_52 = 4503599627370496;
+      const gameResult = (seed, salt) => {
+        let h = seed;
+        if (salt) {
+          h = CryptoJS.HmacSHA256(CryptoJS.enc.Hex.parse(seed), salt).toString(CryptoJS.enc.Hex);
+        }
+        const r = parseInt(h.slice(0, 13), 16);
+        const C = POW_2_52 / (POW_2_52 - r);
+        const crashAt = Math.floor(Math.log(C) / K);
+        const bustX100 = Math.floor(Math.exp(K * crashAt) * 100);
+        return bustX100 / 100;
+      };
+      $.fn.appendToWithIndex = function (to, index) {
+        if (!to instanceof jQuery) {
+          to = $(to);
+        }
+        if (index === 0) {
+          $(this).prependTo(to);
+        } else {
+          $(this).insertAfter(to.children().eq(index - 1));
+        }
+      };
+      var hash_url = window.location.search;
+      if (/hash=/.test(hash_url)) {
+        var hash = hash_url.match(/hash=[0-9a-zA-z]+/)[0].replace(/hash=/, "");
+        $("#game_hash_input").val(hash);
+        $("#game_verify_submit").click();
+      }
+    </script>
+    <script>
+      // tell the embed parent frame the height of the content
+      if (window.parent && window.parent.parent) {
+        window.parent.parent.postMessage(
+          [
+            "resultsFrame",
+            {
+              height: document.body.getBoundingClientRect().height,
+              slug: "nwu2ffkv",
+            },
+          ],
+          "*"
+        );
+      }
+    </script>
+  </body>
+</html>
